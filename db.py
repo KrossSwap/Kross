@@ -1,0 +1,78 @@
+from dataclasses import dataclass
+from enum import Enum
+
+@dataclass
+class Order:
+    id: int
+    # With the order token, the user can claim ownership of the order, useful if an error occurs and manual resolution is required.
+    # The token has 256 bits of entropy
+    token: str
+
+
+class SwapInStatus(Enum):
+    WAITING_CONFIRMATIONS = "waiting_confirmations"
+    # Once on-chain transaction is confirmed, we can prompt the user to send us a LN invoice
+    WAITING_INVOICE = "waiting_invoice"
+    # User has sent us a LN invoice, it will be procesed by a background task
+    BATCHED = "batched"
+    SUCCESS = "success"
+    EXPIRED = "expired"
+    ERROR = "error"
+
+@dataclass
+class SwapIn(Order):
+    # Inherits id from order
+    # From on-chain to lightning
+    status: SwapInStatus
+    # On chain address the user should send the funds to
+    address: str
+    amount_in_sats: int
+    # This field is dynamically calculated based on the current rate when the on-chain transaction gets the required number of confirmations.
+    amount_out_sats: int = 0
+    # The user can accelerate the process by providing a lightning address, if so, there will be no need for prompting the user to send us a LN invoice
+    lightning_address: str | None = None
+
+
+class SwapInLightningPaymentRequestStatus(Enum):
+    PENDING = "pending"
+    ON_FLIGHT = "on_flight"
+    PAID = "paid"
+    FAILED = "failed"
+    ERROR = "error"
+
+@dataclass
+class SwapInLightningPaymentRequest:
+    id: int
+    swap_in_id: int
+    status: SwapInLightningPaymentRequestStatus
+    payment_request: str
+    max_routing_fee_sats: int
+
+
+class SwapOutStatus(Enum):
+    WAITING_PAYMENT = "waiting_payment"
+    # User has sent us a LN payment, it will be processed by a background task
+    BATCHED = "batched"
+    SUCCESS = "success"
+    EXPIRED = "expired"
+    ERROR = "error"
+
+@dataclass
+class SwapOut(Order):
+    # Inherits id from order
+    # From lightning to on-chain
+    status: SwapOutStatus
+    # Lightning invoice the user should pay
+    ln_invoice: str
+    # 32 byte secret used to settle the hold invoice
+    ln_hold_invoice_secret: bytes
+    # The bitcoin address the user should receive the funds to
+    address: str
+    amount_in_sats: int
+    # This field is dynamically calculated based on the current rate when the LN payment gets confirmed.
+    amount_out_sats: int = 0
+
+
+# Implement accessors and setters using async psycopg
+
+
