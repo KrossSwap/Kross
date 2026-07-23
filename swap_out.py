@@ -55,4 +55,6 @@ def swap_out(amount: int, address: str):
             ...
 
 
-    swap_out_order.subscribe_to_invoice(payment_request, invoice_callback)
+    # Nos suscribimos por 'secret': el cliente calcula el payment_hash localmente
+    # (sha256(secret)), evitando una llamada de red para decodificar el invoice.
+    lnd_client.subscribe_to_invoice(secret, invoice_callback)
