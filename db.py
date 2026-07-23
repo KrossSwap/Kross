@@ -1,3 +1,4 @@
+#TODO: pip install sqlalchemy psycopg[binary]; Reimplement this using SQLAlchemy, giving the chance of using sqlite3 (default) and postgres (ideally in production)
 from dataclasses import dataclass
 from enum import Enum
 
@@ -49,6 +50,7 @@ class SwapInLightningPaymentRequest:
     max_routing_fee_sats: int
 
 
+# Kross is optimized if the majority of orders are swap-outs
 class SwapOutStatus(Enum):
     WAITING_PAYMENT = "waiting_payment"
     # User has sent us a LN payment, it will be processed by a background task
@@ -61,7 +63,7 @@ class SwapOutStatus(Enum):
 class SwapOut(Order):
     # Inherits id from order
     # From lightning to on-chain
-    status: SwapOutStatus
+    status: SwapOutStatus = SwapOutStatus.WAITING_PAYMENT
     # Lightning invoice the user should pay
     ln_invoice: str
     # 32 byte secret used to settle the hold invoice
