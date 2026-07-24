@@ -5,6 +5,7 @@ fastapi==0.139.0
 grpcio==1.83.0
 grpcio-tools==1.83.0
 protobuf==7.35.1
+python-bitcoinrpc==1.0
 idna==3.18
 psycopg==3.3.4
 pydantic==2.13.4
