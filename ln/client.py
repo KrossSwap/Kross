@@ -143,6 +143,7 @@ class LNDCLient:
                 status = lightning_pb2.Invoice.InvoiceState.Name(invoice.state)
                 callback(SimpleNamespace(status=status, raw=invoice))
 
+        #TODO: Launching a thread for each order is inefficient, and does not scale very well, in the future it will be better to use a single thread that monitors all invoices
         threading.Thread(target=run, daemon=True).start()
 
     def pay_invoice(
@@ -161,6 +162,16 @@ class LNDCLient:
         Nota: el monto normalmente ya viene dentro del payment_request; 'amount'
         queda disponible por si en el futuro pagamos invoices de monto abierto.
         """
+
+        decoded = self.lightning.DecodePayReq(
+            lightning_pb2.PayReqString(pay_req=payment_request)
+        )
+        
+        if decoded.num_satoshis != 0 and decoded.num_satoshis != amount:
+            raise ValueError(
+                f"Invoice amount mismatch: invoice={decoded.num_satoshis} sats, expected={amount} sats"
+            )
+
         request = router_pb2.SendPaymentRequest(
             payment_request=payment_request,
             fee_limit_sat=max_fee,
