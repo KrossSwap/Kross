@@ -19,6 +19,8 @@ async def send_batched_payouts():
         if not batched_orders:
             return
 
+        order_ids = [order.id for order in batched_orders]
+
         # 2. Armamos los outputs: una entrada por orden (dirección + monto a pagar)
         outputs = [
             TransactionOutput(address=order.address, amount_in_sats=order.amount_out_sats)
@@ -32,7 +34,4 @@ async def send_batched_payouts():
         txid = btc_client.send_batched_payments(outputs, fee_per_vbyte)
 
         # 4. Guardamos el txid y marcamos las órdenes como pagadas
-        order_ids = [order.id for order in batched_orders]
         await mark_swap_outs_paid(order_ids, txid)
-
- 

@@ -1,7 +1,7 @@
 import os
-
+import secrets
 from ln.client import LNDCLient
-from db import SwapOut, SwapOutStatus, SwapOutPayment, SwapOutPaymentStatus
+from db import SwapOut, SwapOutStatus, SwapOutPayment, SwapOutPaymentStatus, db_session
 from balance_calculator import get_onchain_balance
 
 MIN_BATCH_SIZE = int(os.getenv('MIN_BATCH_SIZE', 3))
@@ -32,12 +32,15 @@ def swap_out(amount: int, address: str):
 
     # First we create an order
     swap_out_order = SwapOut(
+        token=secrets.token_hex(32),
         ln_invoice=payment_request,
         ln_hold_invoice_secret=secret,
         address=address,
         amount_in_sats=amount,
         amount_out_sats=swap_out_calculate_amount_out(amount),
     )
+    db_session.add(swap_out_order)
+    db_session.commit()
 
     # Subscribe to updates for the hold invoice
     def invoice_callback(invoice):
@@ -47,7 +50,7 @@ def swap_out(amount: int, address: str):
             if swap_out_order.status != SwapOutStatus.WAITING_PAYMENT:
                 raise Exception(f"Swap out order status is not waiting_payment: order id: {swap_out_order.id}")
             
-            lnd_client.settle_hold_invoice(swap_out_order.secret)
+            lnd_client.settle_hold_invoice(swap_out_order.ln_hold_invoice_secret)
 
         if invoice.status == 'SETTLED':
             if swap_out_order.status != SwapOutStatus.WAITING_PAYMENT:
@@ -55,23 +58,25 @@ def swap_out(amount: int, address: str):
         
             # Now we can batch the payment to the user
             swap_out_order.status = SwapOutStatus.BATCHED
-            swap_out_order.save()
-            payment = SwapOutPayment(SwapOutPaymentStatus.BATCHED, swap_out_order.address, swap_out_order.amount_out_sats)
-            payment.save()
+            payment = SwapOutPayment(
+                status=SwapOutPaymentStatus.BATCHED, 
+                address=swap_out_order.address, 
+                amount=swap_out_order.amount_out_sats
+            )
+            db_session.add(payment)
+            db_session.commit()
             return
         
         elif invoice.status == 'CANCELED':
             # Delete the order from databse for cleanup
-        elif invoice.status == 'CANCELED':
-            # Delete the order from databse for cleanup
             swap_out_order.status = SwapOutStatus.EXPIRED
-            swap_out_order.save()
+            db_session.commit()
             return
         
         else:
             # Something waird is happening, log an error
             swap_out_order.status = SwapOutStatus.ERROR
-            swap_out_order.save()
+            db_session.commit()
             return
 
 
