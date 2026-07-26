@@ -79,6 +79,27 @@ class SwapOut(Order):
     # Txid of the batched on-chain transaction that paid this order out
     txid: str | None = None
 
+class SwapOutPaymentStatus(Enum):
+    BATCHED = 'batched'
+    PAID = 'paid'
+    ERROR = 'error'
+
+@dataclass
+class SwapOutPayment:
+    id: int
+    status: SwapOutPaymentStatus
+    address: str
+    amount: int
+    fees_paid: int | None
+    txid: str | None
+
+@dataclass
+class OnChainPaymentBatch:
+    id: int
+    txid: str
+    return_address: str
+    # This should be a "virtual field", result of joining with a relation table between onchainpaymentbatch and swapoutpayment
+    payments: list[SwapOutPayment]
 
 # Implement accessors and setters using async psycopg
 

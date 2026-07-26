@@ -1,7 +1,7 @@
 import os
 
 from ln.client import LNDCLient
-from db import SwapOut, SwapOutStatus
+from db import SwapOut, SwapOutStatus, SwapOutPayment, SwapOutPaymentStatus
 from balance_calculator import get_onchain_balance
 
 MIN_BATCH_SIZE = int(os.getenv('MIN_BATCH_SIZE', 3))
@@ -56,8 +56,12 @@ def swap_out(amount: int, address: str):
             # Now we can batch the payment to the user
             swap_out_order.status = SwapOutStatus.BATCHED
             swap_out_order.save()
+            payment = SwapOutPayment(SwapOutPaymentStatus.BATCHED, swap_out_order.address, swap_out_order.amount_out_sats)
+            payment.save()
             return
         
+        elif invoice.status == 'CANCELED':
+            # Delete the order from databse for cleanup
         elif invoice.status == 'CANCELED':
             # Delete the order from databse for cleanup
             swap_out_order.status = SwapOutStatus.EXPIRED
