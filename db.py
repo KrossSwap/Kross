@@ -73,8 +73,20 @@ class SwapOut(Order):
     amount_in_sats: int
     # This field is dynamically calculated based on the current rate when the LN payment gets confirmed.
     amount_out_sats: int = 0
+    # Txid of the batched on-chain transaction that paid this order out
+    txid: str | None = None
 
 
 # Implement accessors and setters using async psycopg
+
+async def get_swap_outs_by_status(status: SwapOutStatus) -> list[SwapOut]:
+    # TODO: implementar con SQLAlchemy (SELECT * FROM swap_out WHERE status = %s)
+    raise NotImplementedError
+
+
+async def mark_swap_outs_paid(swap_out_ids: list[int], txid: str) -> None:
+    # TODO: implementar con SQLAlchemy
+    # UPDATE swap_out SET status = 'success', txid = %s WHERE id = ANY(%s)
+    raise NotImplementedError
 
 
