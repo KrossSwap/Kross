@@ -55,6 +55,7 @@ class SwapOutStatus(Enum):
     WAITING_PAYMENT = "waiting_payment"
     # User has sent us a LN payment, it will be processed by a background task
     BATCHED = "batched"
+    ABOUT_TO_BE_PAID = "about_to_be_paid"
     SUCCESS = "success"
     EXPIRED = "expired"
     ERROR = "error"
@@ -90,3 +91,5 @@ async def mark_swap_outs_paid(swap_out_ids: list[int], txid: str) -> None:
     raise NotImplementedError
 
 
+async def mark_swap_outs_about_to_be_paid(swap_out_ids: list[int]) -> None:
+    raise NotImplementedError
