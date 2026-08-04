@@ -25,6 +25,11 @@ def swap_out(amount: int, address: str):
     lnd_client= LNDCLient.instance()
     secret = lnd_client.generate_secret()
     payment_request = lnd_client.create_hold_invoice(amount, secret, f"Swap {amount} sats out to {address}")
+
+    # Que pasa si address es un string gigante??
+    # X ej un string de 1gb, si mandas varias ordenes colapsas la base de datos
+    # address es una direccion bitcoin valida? address es realmente un string?
+
     # First we create an order
     swap_out_order = SwapOut(
         ln_invoice=payment_request,
@@ -55,11 +60,15 @@ def swap_out(amount: int, address: str):
         
         elif invoice.status == 'CANCELED':
             # Delete the order from databse for cleanup
-            ...
+            swap_out_order.status = SwapOutStatus.EXPIRED
+            swap_out_order.save()
+            return
         
         else:
             # Something waird is happening, log an error
-            ...
+            swap_out_order.status = SwapOutStatus.ERROR
+            swap_out_order.save()
+            return
 
 
     # Nos suscribimos por 'secret': el cliente calcula el payment_hash localmente

@@ -1,6 +1,7 @@
 #TODO: pip install sqlalchemy psycopg[binary]; Reimplement this using SQLAlchemy, giving the chance of using sqlite3 (default) and postgres (ideally in production)
 from dataclasses import dataclass
 from enum import Enum
+from datetime import date
 
 @dataclass
 class Order:
@@ -8,6 +9,7 @@ class Order:
     # With the order token, the user can claim ownership of the order, useful if an error occurs and manual resolution is required.
     # The token has 256 bits of entropy
     token: str
+    created_at: date
 
 
 class SwapInStatus(Enum):

@@ -8,6 +8,7 @@ FEE_PRIORITY = os.getenv('BATCH_FEE_PRIORITY', 'medium')
 
 lock = asyncio.Lock()
 
+#TODO: No usar asyncio, usar hilos, mejor practica
 # This should be a job that executes periodically (~once per 2 hours)
 async def send_batched_payouts():
     #si se ejecuta 2 veces al mismo tiempo en paralelo?
@@ -33,4 +34,5 @@ async def send_batched_payouts():
         # 4. Guardamos el txid y marcamos las órdenes como pagadas
         order_ids = [order.id for order in batched_orders]
         await mark_swap_outs_paid(order_ids, txid)
+
  
